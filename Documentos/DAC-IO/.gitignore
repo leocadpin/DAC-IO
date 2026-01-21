@@ -1,0 +1,22 @@
+# STM32CubeIDE
+*.launch
+*.log
+*.bak
+*.swp
+*.tmp
+*.obj
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+
+.settings/
+Debug/
+Release/
+
+# Python
+__pycache__/
+*.pyc
+venv/
