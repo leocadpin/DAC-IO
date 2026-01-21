@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Ruta origen (tu proyecto STM32)
-DESTINO="/home/leo/Documentos/DAC-IO/stm32/DAC-IO-STM32
-"
+DESTINO="/home/leo/Documentos/DAC-IO/stm32/DAC-IO-STM32"
 
 # Ruta destino (tu carpeta dentro del proyecto)
 ORIGEN="/home/leo/STM32CubeIDE/workspace_1.15.0/CANBUSTESTING"
