@@ -1,8 +1,12 @@
 #!/bin/bash
 
 # Ruta origen (tu proyecto STM32)
+<<<<<<< HEAD
 DESTINO="/home/leo/Documentos/DAC-IO/stm32/DAC-IO-STM32
 "
+=======
+DESTINO="/home/leo/Documentos/DAC-IO/stm32/DAC-IO-STM32"
+>>>>>>> 5dde6223d7ae7ed3d4b7384dd3cb06522d3aa4b0
 
 # Ruta destino (tu carpeta dentro del proyecto)
 ORIGEN="/home/leo/STM32CubeIDE/workspace_1.15.0/CANBUSTESTING"
