@@ -1,8 +1,11 @@
 
+
 #include "main.h"
+#include "cmsis_os.h"
 #include "usb_host.h"
-
-
+#include "fingerprint_task.h"
+#include "debug_task.h"
+#include "can_task.h"
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
 
@@ -14,6 +17,15 @@ SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+
+
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -23,73 +35,13 @@ static void MX_SPI1_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_USART2_UART_Init(void);
-void MX_USB_HOST_Process(void);
-uint8_t as608_rx[12];
-
-void AS608_Send(uint8_t *cmd, uint16_t len, uint16_t rx_len) {
-    HAL_UART_Transmit(&huart2, cmd, len, HAL_MAX_DELAY);
-    HAL_UART_Receive(&huart2, as608_rx, rx_len, 3000);
-}
-
-uint8_t cmd_getImage[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x03,0x01,0x00,0x05
-};
-//uint8_t cmd_img2tz_1[] = {
-//  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-//  0x01,0x00,0x04,0x02,0x01,0x00,0x08
-//};
-uint8_t cmd_img2tz_2[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x04,0x02,0x02,0x00,0x09
-};
-uint8_t cmd_createModel[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x03,0x05,0x00,0x09
-};
-uint8_t cmd_storeModel[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x06,0x06,0x01,0x00,0x03,0x00,0x11
-};
-
-// Img2Tz buffer 1
-uint8_t cmd_img2tz_1[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x04,
-  0x02,
-  0x01,
-  0x00,0x08
-};
-
-// Search buffer 1
-uint8_t cmd_search[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x08,
-  0x04,
-  0x01,
-  0x00,0x00,
-  0x00,0x64,
-  0x00,0x71
-};
-
-uint8_t cmd_verify[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x06,
-  0x03,0x01,0x00,0x01,
-  0x00,0x0C
-};
-
-uint8_t cmd_verify3[] = {
-  0xEF,0x01,0xFF,0xFF,0xFF,0xFF,
-  0x01,0x00,0x06,
-  0x03,0x01,0x00,0x03,
-  0x00,0x0E
-};
+void StartDefaultTask(void *argument);
 
 int main(void)
 {
 
   HAL_Init();
+
 
   SystemClock_Config();
 
@@ -97,90 +49,39 @@ int main(void)
   MX_I2C1_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
-  MX_USB_HOST_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
+  CAN_BSP_Init();
   MX_USART2_UART_Init();
-  
+  /* USER CODE BEGIN 2 */
 
 
 
+  /* USER CODE END 2 */
 
-  HAL_Delay(1000); // deja tiempo al sensor a arrancar
+  /* Init scheduler */
+  osKernelInitialize();
 
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-//  // 1️⃣ PON EL DEDO
-//  AS608_Send(cmd_getImage, sizeof(cmd_getImage), 12);
-//  HAL_Delay(1800);
-//
-//  // 2️⃣ NO MUEVAS EL DEDO
-//  AS608_Send(cmd_img2tz_1, sizeof(cmd_img2tz_1), 12);
-//  HAL_Delay(1500);
-//
-//  // 3️⃣ BUSCAR
-//  AS608_Send(cmd_search, sizeof(cmd_search), 16);
-//
+  FingerprintTask_Init();
+  CANTask_Init();
+//  ConsumerTask_Init();
 
+  osKernelStart();
 
-//  // 1️⃣ Primer dedo
-//  AS608_Send(cmd_getImage, sizeof(cmd_getImage), 12);
-//  HAL_Delay(1000);
-//
-//  AS608_Send(cmd_img2tz_1, sizeof(cmd_img2tz_1), 12);
-//  HAL_Delay(1500);
-//
-//  // 2️⃣ Segundo dedo (mismo dedo)
-//  AS608_Send(cmd_getImage, sizeof(cmd_getImage), 12);
-//  HAL_Delay(1000);
-//
-//  AS608_Send(cmd_img2tz_2, sizeof(cmd_img2tz_2), 12);
-//  HAL_Delay(1000);
-//
-//  // 3️⃣ Crear modelo
-//  AS608_Send(cmd_createModel, sizeof(cmd_createModel), 12);
-//  HAL_Delay(1000);
-//
-//  // 4️⃣ Guardar huella en ID 1
-//  AS608_Send(cmd_storeModel, sizeof(cmd_storeModel), 12);
-//  HAL_Delay(1000);
+  /* We should never get here as control is now taken by the scheduler */
 
-  // 1️⃣ PON EL DEDO ANTES DE ENTRAR AQUÍ
-  AS608_Send(cmd_getImage, sizeof(cmd_getImage), 12);
-
-  // breakpoint aquí → as608_rx[9] debe ser 0x00
-  HAL_Delay(500);
-
-  // 2️⃣ NO MUEVAS EL DEDO
-  AS608_Send(cmd_img2tz_1, sizeof(cmd_img2tz_1), 12);
-
-  // breakpoint aquí → as608_rx[9] debe ser 0x00
-  HAL_Delay(500);
-
-  // 3️⃣ VERIFY contra ID = 1
-  AS608_Send(cmd_verify3, sizeof(cmd_verify3), 12);
-
-  // breakpoint aquí → as608_rx[9]
-  // 0x00 = MATCH
-  // 0x08 = NO MATCH
-  // 0x01 = ERROR flujo
-
-  /* ================================================ */
-
-
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
 
-    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -534,6 +435,26 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* init code for USB_HOST */
+  MX_USB_HOST_Init();
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
