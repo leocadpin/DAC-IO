@@ -13,35 +13,36 @@
 static void CANTask(void *arg)
 {
     fingerprint_event_t evt;
-    uint8_t txData[8] = {'C','a','f','e','t','e','r', 'a'};
+//    uint8_t txData[8] = {'C','a','f','e','t','e','r', 'a'};
+    uint8_t txData[8];
     can_bsp_msg_t msg;
     for (;;)
     {
-//        if (xQueueReceive(FingerprintTask_GetQueue(), &evt, portMAX_DELAY))
-//        {
-//            txData[0] = (evt.status == AS608_MATCH) ? 1 : 0;
-//            txData[1] = (evt.status == AS608_MATCH) ? (evt.id >> 8) & 0xFF : 0;
-//            txData[2] = (evt.status == AS608_MATCH) ? evt.id & 0xFF : 0;
-//
-            CAN_BSP_Send(0x123, txData, 8);
-//        }
-//    	            CAN_BSP_Send(0x17001, txData, 3);
-					vTaskDelay(pdMS_TO_TICKS(1000));
-					//
-					//            txData[0] = 0;
-					//            txData[1] = 0xF2;
-					//            txData[2] = 0;
-					//
-					//            CAN_BSP_Send(0x123, txData, 3);
-					//            vTaskDelay(pdMS_TO_TICKS(100));
-					//        if (xQueueReceive(CAN_App_GetRxQueue(), &msg, portMAX_DELAY))
-					//        {
-					//            // Ejemplo:
-					//            if (msg.id == 0x200)
-					//            {
-					//                // comando remoto
-					//            }
-					//        }
+        if (xQueueReceive(FingerprintTask_GetQueue(), &evt, portMAX_DELAY))
+        {
+            txData[0] = (evt.status == AS608_MATCH) ? 1 : 0;
+            txData[1] = (evt.status == AS608_MATCH) ? (evt.id >> 8) & 0xFF : 0;
+            txData[2] = (evt.status == AS608_MATCH) ? evt.id & 0xFF : 0;
+
+//            CAN_BSP_Send(0x123, txData, 8);
+        }
+    	            CAN_BSP_Send(0x17001, txData, 3);
+//					vTaskDelay(pdMS_TO_TICKS(1000));
+
+					            txData[0] = 0;
+					            txData[1] = 0xF2;
+					            txData[2] = 0;
+
+					            CAN_BSP_Send(0x123, txData, 3);
+					            vTaskDelay(pdMS_TO_TICKS(100));
+					        if (xQueueReceive(CAN_App_GetRxQueue(), &msg, portMAX_DELAY))
+					        {
+					            // Ejemplo:
+					            if (msg.id == 0x200)
+					            {
+					                // comando remoto
+					            }
+					        }
     }
 }
 
