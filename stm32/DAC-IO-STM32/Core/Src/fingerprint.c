@@ -83,6 +83,29 @@ as608_status_t AS608_Img2Tz(uint8_t buffer)
     return as608_parse_ack(rx);
 }
 
+as608_status_t AS608_LoadChar(uint8_t buffer, uint16_t page_id)
+{
+    uint8_t params[3];
+    uint8_t rx[12];
+
+    params[0] = buffer;
+    params[1] = page_id >> 8;
+    params[2] = page_id & 0xFF;
+
+    if (as608_send_cmd(AS608_CMD_LOAD_CHAR, params, 3, rx, sizeof(rx)) != 0)
+        return AS608_ERROR;
+
+    uint8_t confirm = rx[9];
+
+    if (confirm == 0x00)
+        return AS608_OK;
+
+    if (confirm == 0x09)
+        return AS608_NO_TEMPLATE;
+
+    return AS608_ERROR;
+}
+
 
 
 static as608_status_t as608_parse_ack(uint8_t *rx)
@@ -160,3 +183,15 @@ static int as608_send_cmd(uint8_t instruction,
 
     return 0;
 }
+
+uint16_t AS608_FindFreeID(uint16_t max_id)
+{
+    for (uint16_t id = 0; id < max_id; id++)
+    {
+        if (AS608_LoadChar(1, id) == AS608_NO_TEMPLATE)
+            return id;
+    }
+
+    return 0xFFFF; // no hay hueco
+}
+

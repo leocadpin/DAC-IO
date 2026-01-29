@@ -16,7 +16,8 @@ typedef enum {
     FP_STATE_SEARCH,
     FP_STATE_MATCH,
     FP_STATE_NO_MATCH,
-    FP_STATE_ERROR
+    FP_STATE_ERROR,
+	FP_STATE_ENROLL
 } fp_state_t;
 
 static QueueHandle_t fp_queue;
@@ -33,6 +34,7 @@ static void FingerprintTask(void *arg)
 {
     fp_state_t state = FP_STATE_IDLE;
     uint16_t id;
+    id = AS608_FindFreeID(100);
 
     for (;;)
     {
@@ -84,6 +86,11 @@ static void FingerprintTask(void *arg)
             vTaskDelay(pdMS_TO_TICKS(500));
             state = FP_STATE_IDLE;
             break;
+        }
+
+        case FP_STATE_ENROLL:
+        {
+
         }
 
         case FP_STATE_ERROR:

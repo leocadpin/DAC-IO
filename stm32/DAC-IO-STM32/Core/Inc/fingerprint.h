@@ -17,7 +17,8 @@ typedef enum {
     AS608_NO_FINGER,
     AS608_MATCH,
     AS608_NO_MATCH,
-    AS608_ERROR
+    AS608_ERROR,
+	AS608_NO_TEMPLATE
 } as608_status_t;
 
 void AS608_Init(void);
@@ -26,7 +27,10 @@ as608_status_t AS608_GetImage(void);
 as608_status_t AS608_Img2Tz(uint8_t buffer);
 as608_status_t AS608_Verify(uint16_t id);
 as608_status_t AS608_Search(uint16_t *id);
+as608_status_t AS608_LoadChar(uint8_t buffer, uint16_t page_id);
+uint16_t AS608_FindFreeID(uint16_t max_id);
 
+//as608_status_t AS608
 
 
 #define AS608_START_CODE   0xEF01
@@ -36,9 +40,14 @@ as608_status_t AS608_Search(uint16_t *id);
 #define AS608_CMD_IMG2TZ       0x02
 #define AS608_CMD_VERIFY       0x03
 #define AS608_CMD_SEARCH       0x04
+#define AS608_CMD_LOAD_CHAR	   0x07
+
 
 #define AS608_TX_TIMEOUT_MS   10
 #define AS608_RX_TIMEOUT_MS  3000
+
+#define AS608_ID_MIN     1
+#define AS608_ID_MAX     127
 
 
 #endif /* INC_FINGERPRINT_H_ */

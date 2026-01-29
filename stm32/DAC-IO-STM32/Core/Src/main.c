@@ -65,7 +65,7 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   FingerprintTask_Init();
-  CANTask_Init();
+//  CANTask_Init();
 //  ConsumerTask_Init();
 
   osKernelStart();
