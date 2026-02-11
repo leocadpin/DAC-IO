@@ -4,7 +4,7 @@ Embedded access control system based on STM32 and FreeRTOS.
 
 The system integrates:
 - Fingerprint authentication (AS608)
-- CAN communication
+- CAN communication between STM32 and RPI
 - Stepper motor door simulation (28BYJ-48)
 - OLED display interface (SSD1309)
 - RTOS-based software architecture
@@ -35,9 +35,9 @@ The system integrates:
 
 See detailed documentation:
 
-- 📐 [Hardware Architecture](docs/hardware.md)
-- 🧩 [Software Architecture](docs/software_architecture.md)
-- 🕓 [Development Log](docs/development_log.md)
+- 📐 [Hardware Architecture](hardware.md)
+- 🧩 [Software Architecture](software_architecture.md)
+- 🕓 [Development Log](development_log.md)
 
 ---
 

@@ -10,6 +10,9 @@ This system is composed of:
 - Motor driver board
 - SSD1309 OLED display
 - CAN interface
+- Raspberry PI 3 model B
+- Module MCP2515 SPI to CAN
+- TJA CAN Bus transceiver
 
 ---
 
@@ -51,4 +54,4 @@ This system is composed of:
 ## 📐 Hardware Diagram
 
 See diagrams in:
-
+[Esquema](esquema_hardware.png)
