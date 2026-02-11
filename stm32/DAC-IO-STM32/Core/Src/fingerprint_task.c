@@ -20,6 +20,19 @@ typedef enum {
 	FP_STATE_ENROLL
 } fp_state_t;
 
+typedef enum {
+    ENROLL_GET_IMAGE_1,
+    ENROLL_CONVERT_1,
+    ENROLL_WAIT_RELEASE,
+    ENROLL_GET_IMAGE_2,
+    ENROLL_CONVERT_2,
+    ENROLL_CREATE_MODEL,
+    ENROLL_STORE,
+    ENROLL_DONE,
+    ENROLL_FAIL
+} enroll_state_t;
+
+
 static QueueHandle_t fp_queue;
 static TaskHandle_t fp_task_handle;
 
@@ -34,21 +47,32 @@ static void FingerprintTask(void *arg)
 {
     fp_state_t state = FP_STATE_IDLE;
     uint16_t id;
-    id = AS608_FindFreeID(100);
+
 
     for (;;)
     {
         switch (state)
         {
         case FP_STATE_IDLE:
-            state = FP_STATE_WAIT_FINGER;
+
+			state = FP_STATE_WAIT_FINGER;
+
             break;
 
         case FP_STATE_WAIT_FINGER:
-            if (AS608_GetImage() == AS608_OK)
-                state = FP_STATE_CONVERT;
+            if (enroll_requested)
+            {
+                enroll_requested = 0;
+                state = FP_STATE_ENROLL;
+            }
             else
-                vTaskDelay(pdMS_TO_TICKS(100));
+            {
+				if (AS608_GetImage() == AS608_OK)
+					state = FP_STATE_CONVERT;
+				else
+					vTaskDelay(pdMS_TO_TICKS(10000));
+            }
+
             break;
 
         case FP_STATE_CONVERT:
@@ -90,8 +114,92 @@ static void FingerprintTask(void *arg)
 
         case FP_STATE_ENROLL:
         {
+            static enroll_state_t enroll_state = ENROLL_GET_IMAGE_1;
+            static uint16_t enroll_id = 0xFFFF;
 
+            switch (enroll_state)
+            {
+            case ENROLL_GET_IMAGE_1:
+                if (AS608_GetImage() == AS608_OK)
+                    enroll_state = ENROLL_CONVERT_1;
+                else
+                    vTaskDelay(pdMS_TO_TICKS(5000));
+                break;
+
+            case ENROLL_CONVERT_1:
+                if (AS608_Img2Tz(1) == AS608_OK)
+                    enroll_state = ENROLL_WAIT_RELEASE;
+                else
+                    enroll_state = ENROLL_FAIL;
+                break;
+
+            case ENROLL_WAIT_RELEASE:
+                if (AS608_GetImage() == AS608_NO_FINGER)
+                    enroll_state = ENROLL_GET_IMAGE_2;
+                else
+                    vTaskDelay(pdMS_TO_TICKS(5000));
+                break;
+
+            case ENROLL_GET_IMAGE_2:
+                if (AS608_GetImage() == AS608_OK)
+                    enroll_state = ENROLL_CONVERT_2;
+                else
+                    vTaskDelay(pdMS_TO_TICKS(5000));
+                break;
+
+            case ENROLL_CONVERT_2:
+                if (AS608_Img2Tz(2) == AS608_OK)
+                    enroll_state = ENROLL_CREATE_MODEL;
+                else
+                    enroll_state = ENROLL_FAIL;
+                break;
+
+            case ENROLL_CREATE_MODEL:
+                if (AS608_RegModel() == AS608_OK)
+                {
+                    enroll_id = AS608_FindFreeID(300);
+                    if (enroll_id != 0xFFFF)
+                        enroll_state = ENROLL_STORE;
+                    else
+                        enroll_state = ENROLL_FAIL;
+                }
+                else
+                    enroll_state = ENROLL_FAIL;
+                break;
+
+            case ENROLL_STORE:
+                if (AS608_StoreChar(1, enroll_id) == AS608_OK)
+                    enroll_state = ENROLL_DONE;
+                else
+                    enroll_state = ENROLL_FAIL;
+                break;
+
+            case ENROLL_DONE:
+            {
+                fingerprint_event_t evt = {
+                    .status = AS608_OK,
+                    .id = enroll_id
+                };
+                xQueueSend(fp_queue, &evt, 0);
+
+
+                enroll_state = ENROLL_GET_IMAGE_1;
+                state = FP_STATE_IDLE;
+                break;
+            }
+
+            case ENROLL_FAIL:
+            default:
+
+                enroll_state = ENROLL_GET_IMAGE_1;
+                state = FP_STATE_ERROR;
+                break;
+            }
+
+            break;
         }
+
+
 
         case FP_STATE_ERROR:
         default:
@@ -115,3 +223,9 @@ void FingerprintTask_Init(void)
         &fp_task_handle
     );
 }
+
+void Fingerprint_RequestEnroll(void)
+{
+    enroll_requested = 1;
+}
+

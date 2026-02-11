@@ -1,11 +1,50 @@
-
-
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2026 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
 #include "usb_host.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "fingerprint_task.h"
 #include "debug_task.h"
 #include "can_task.h"
+#include "motor_task.h"
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
 
@@ -24,9 +63,11 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* USER CODE BEGIN PV */
 
+/* USER CODE END PV */
 
-
+/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
@@ -37,37 +78,159 @@ static void MX_CAN2_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void *argument);
 
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+void Motor_PowerMonitor_Check(void)
+{
+    static uint32_t reset_count = 0;
+
+    // Detectar si hubo reset inesperado
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
+        reset_count++;
+
+        __HAL_RCC_CLEAR_RESET_FLAGS();
+    }
+
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST)) {
+
+        __HAL_RCC_CLEAR_RESET_FLAGS();
+    }
+}
+
+/**
+ * @brief Test de consumo antes de mover el motor
+ * Llama a esto ANTES de iniciar el motor
+ */
+//void Test2_Slow_Sequence(void)
+//{
+//
+//
+//
+//    // Apagar todo
+//
+//
+//    printf("TEST 4: Normal Speed Test\n");
+//    printf("Motor girando a velocidad normal (2ms entre pasos)\n\n");
+//
+//    const uint8_t sequence[8][4] = {
+//        {1, 0, 0, 0},
+//        {1, 1, 0, 0},
+//        {0, 1, 0, 0},
+//        {0, 1, 1, 0},
+//        {0, 0, 1, 0},
+//        {0, 0, 1, 1},
+//        {0, 0, 0, 1},
+//        {1, 0, 0, 1}
+//    };
+//
+//    // Hacer una revolución completa (2048 pasos)
+//    printf("Girando 360 grados...\n");
+//    for (int step = 0; step < 4096; step++) {
+//        int seq_idx = step % 8;
+//
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, sequence[seq_idx][0] ? GPIO_PIN_SET : GPIO_PIN_RESET);
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, sequence[seq_idx][1] ? GPIO_PIN_SET : GPIO_PIN_RESET);
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, sequence[seq_idx][2] ? GPIO_PIN_SET : GPIO_PIN_RESET);
+//        HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, sequence[seq_idx][3] ? GPIO_PIN_SET : GPIO_PIN_RESET);
+//
+//        HAL_Delay(2);  // 2ms - velocidad normal
+//    }
+//
+//    // Apagar todo
+//    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_RESET);
+//
+//    printf("TEST 4 COMPLETADO\n\n");
+//
+//
+//}
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
-  HAL_Init();
+  /* USER CODE BEGIN 1 */
 
+  /* USER CODE END 1 */
 
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
+	HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
-  CAN_BSP_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-
-
+//  Motor_PowerMonitor_Check();
+//  Test2_Slow_Sequence();
   /* USER CODE END 2 */
 
   /* Init scheduler */
   osKernelInitialize();
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
+  /* USER CODE BEGIN RTOS_THREADS */
+
+  MotorTask_Init();
   FingerprintTask_Init();
-//  CANTask_Init();
+  CANTask_Init();
 //  ConsumerTask_Init();
 
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
@@ -76,12 +239,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    /* USER CODE END WHILE */
 
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
 
-
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -356,7 +524,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CS_I2C_SPI_GPIO_Port, CS_I2C_SPI_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, CS_I2C_SPI_Pin|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
@@ -365,12 +534,14 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : CS_I2C_SPI_Pin */
-  GPIO_InitStruct.Pin = CS_I2C_SPI_Pin;
+  /*Configure GPIO pins : CS_I2C_SPI_Pin PE10 PE11 PE12
+                           PE13 */
+  GPIO_InitStruct.Pin = CS_I2C_SPI_Pin|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12
+                          |GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CS_I2C_SPI_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : OTG_FS_PowerSwitchOn_Pin */
   GPIO_InitStruct.Pin = OTG_FS_PowerSwitchOn_Pin;
@@ -389,7 +560,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
@@ -427,6 +598,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MEMS_INT2_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

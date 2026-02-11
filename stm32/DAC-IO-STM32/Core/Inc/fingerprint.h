@@ -18,7 +18,6 @@ typedef enum {
     AS608_MATCH,
     AS608_NO_MATCH,
     AS608_ERROR,
-	AS608_NO_TEMPLATE
 } as608_status_t;
 
 void AS608_Init(void);
@@ -27,9 +26,9 @@ as608_status_t AS608_GetImage(void);
 as608_status_t AS608_Img2Tz(uint8_t buffer);
 as608_status_t AS608_Verify(uint16_t id);
 as608_status_t AS608_Search(uint16_t *id);
-as608_status_t AS608_LoadChar(uint8_t buffer, uint16_t page_id);
 uint16_t AS608_FindFreeID(uint16_t max_id);
-
+as608_status_t AS608_RegModel(void);
+as608_status_t AS608_StoreChar(uint8_t buffer, uint16_t page_id);
 //as608_status_t AS608
 
 
@@ -40,7 +39,12 @@ uint16_t AS608_FindFreeID(uint16_t max_id);
 #define AS608_CMD_IMG2TZ       0x02
 #define AS608_CMD_VERIFY       0x03
 #define AS608_CMD_SEARCH       0x04
-#define AS608_CMD_LOAD_CHAR	   0x07
+#define AS608_CMD_REG_MODEL    0x05
+#define AS608_CMD_STORE_CHAR   0x06
+
+#define AS608_CMD_READ_INDEX   0x1F
+
+
 
 
 #define AS608_TX_TIMEOUT_MS   10

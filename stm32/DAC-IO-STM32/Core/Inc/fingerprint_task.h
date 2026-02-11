@@ -22,6 +22,9 @@ typedef struct {
 
 void FingerprintTask_Init(void);
 QueueHandle_t FingerprintTask_GetQueue(void);
+void Fingerprint_RequestEnroll(void);
+static volatile uint8_t enroll_requested = 0;
+
 
 
 
