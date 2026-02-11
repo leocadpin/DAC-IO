@@ -54,4 +54,4 @@ This system is composed of:
 ## 📐 Hardware Diagram
 
 See diagrams in:
-[Esquema](esquema_hardware.png)
+![Esquema](esquema_hardware.png)
