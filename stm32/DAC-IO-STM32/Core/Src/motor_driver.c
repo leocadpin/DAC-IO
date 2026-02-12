@@ -214,8 +214,6 @@ static void Motor_SetPins(uint8_t step)
  */
 static void Motor_WritePin(void *port, uint16_t pin, bool state)
 {
-    /* Note: This needs to be adapted to your specific HAL implementation
-     * Assuming STM32 HAL is used */
     extern void HAL_GPIO_WritePin(void *GPIOx, uint16_t GPIO_Pin, uint8_t PinState);
     HAL_GPIO_WritePin(port, pin, state ? 1 : 0);
 }

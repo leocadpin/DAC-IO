@@ -22,10 +22,10 @@ This system is composed of:
 
 | Signal | STM32 Pin | Notes |
 |--------|----------|------|
-| TX     |          | UART |
-| RX     |          | UART |
-| VCC    |          |      |
-| GND    |          |      |
+| TX     |    PA2   | UART |
+| RX     |    PA3   | UART |
+| VCC    |   3.3V   |      |
+| GND    |    GND   |      |
 
 ---
 
@@ -33,10 +33,10 @@ This system is composed of:
 
 | Signal | STM32 Pin | Notes |
 |--------|----------|------|
-| IN1    |          | GPIO |
-| IN2    |          | GPIO |
-| IN3    |          | GPIO |
-| IN4    |          | GPIO |
+| IN1    |   PE10   | GPIO |
+| IN2    |   PE11   | GPIO |
+| IN3    |   PE12   | GPIO |
+| IN4    |   PE13   | GPIO |
 
 ---
 
@@ -44,14 +44,28 @@ This system is composed of:
 
 | Signal | STM32 Pin | Interface |
 |--------|----------|----------|
-| SCL    |          | SPI/I2C  |
-| SDA    |          | SPI/I2C  |
-| CS     |          |          |
+| MOSI   |  PA7     | SPI      |
+| SCK    |  PA5     | SPI      |
+| CS     |  PA4     | SPI      |
 | DC     |          |          |
+| RST    |          |          |
+| VCC    |  3.3V    |          |
+| GND    |  GND     |          |
+
+---
+
+### CAN Transceiver (TJA1042)
+
+| Signal | STM32 Pin | Notes |
+|--------|----------|------|
+| TX     |    PA2   | UART |
+| RX     |    PA3   | UART |
+| VCC    |   3.3V   |      |
+| GND    |    GND   |      |
 
 ---
 
 ## 📐 Hardware Diagram
 
-See diagrams in:
+:
 ![Esquema](esquema_hardware.png)
