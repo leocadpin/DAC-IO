@@ -84,61 +84,15 @@ Example flow:
 
 ### Step Motor
  
-For the 28BYJ-48 motor used in this project, there are 4 control pins.
+For the 28BYJ-48 motor used in this project, four control pins are required. Each combination of these four outputs defines a specific step in the motor sequence. By iterating through a predefined stepping sequence, the motor advances incrementally. Due to the internal gearbox and stepping mode, approximately 4000+ steps are required to complete one full revolution.
 
-Each combination of these four outputs defines one step in the motor sequence.
+The low-level driver is responsible for defining the rotation direction (clockwise or counterclockwise), executing the step sequence, keeping track of the current step, and controlling the motor speed by adjusting the delay between steps. As a result, the motor position is managed internally by counting steps rather than relying on external feedback.
 
-By iterating through a predefined step sequence, the motor advances incrementally.
-Approximately 4000+ steps are required to complete one full revolution (depending on the stepping mode and gearbox ratio).
+On top of this low-level layer, a control layer runs as a FreeRTOS task. This task is responsible for managing the door state (OPEN, CLOSED, OPENING, CLOSING, ERROR), processing commands, handling inter-task communication, managing the auto-close timing, and keeping operation statistics.
 
-The low-level driver:
+The motor task communicates with the rest of the system through a FreeRTOS message queue. Other tasks, such as the CAN task, do not directly interact with the motor hardware. Instead, they send structured commands to the motor task. For example, when the CAN task receives an OPEN_DOOR command from the Raspberry Pi, it calls the corresponding API function, which places a message into the motor task queue. The motor task then receives the message, processes the command according to the current door state, and executes the appropriate movement.
 
-Defines the rotation direction (clockwise or counterclockwise)
-
-Executes the step sequence
-
-Keeps track of the current step
-
-Controls motor speed via delay between steps
-
-The motor position is therefore managed internally by counting steps.
-
-Then, we have the control layer running as a FreeRTOS task.
-
-Its responsibilities are:
-
-Door state management (OPEN, CLOSED, OPENING, CLOSING, ERROR)
-
-Command processing
-
-Inter-task communication
-
-Auto-close timing
-
-Operation statistics
-
-The motor task communicates with the rest of the system using a FreeRTOS message queue.
-
-Other tasks (for example, the CAN task) do not directly control the motor hardware.
-Instead, they send commands to the motor task.
-
-The CAN task receives a "OPEN_DOOR" command from the Raspberry Pi.
-
-The CAN task calls:
-
-This function sends a message to the motor task queue.
-
-The motor task receives the message.
-
-The motor task processes the command and executes the appropriate movement.
-
-This architecture ensures:
-
-Thread safety
-
-Clear separation of responsibilities
-
-No direct hardware access from other tasks
+This architecture guarantees thread safety, enforces a clear separation of responsibilities, and prevents other tasks from directly accessing hardware resources, ensuring a clean and maintainable system design.
 
 Deterministic control flow
 ---
@@ -147,11 +101,114 @@ Deterministic control flow
 ---
 
 ### CAN Messages Handler
+The driver 
+---
+
+## Raspberry Pi Software
+
+The Raspberry Pi acts as the high-level interface between the embedded system and the external world. While the STM32 handles real-time motor control and deterministic task execution, the Raspberry Pi is responsible for communication, command generation, and HTTP interaction.
+
+The software running on the Raspberry Pi is divided into two main responsibilities:
+
+1. CAN bus communication
+2. HTTP interface and command handling
+
+---
+
+### CAN Bus Configuration and Python Control Script
+
+The Raspberry Pi is configured to use its CAN interface (via SocketCAN). Once the CAN interface is enabled and properly configured at the OS level, communication is handled through standard Linux networking abstractions. This way I create a separation between the "ground" application and the app for the user. 
+
+The Raspberry Pi does the following tasks:
+
+* Listens for CAN frames coming from the STM32
+* Determine if the fingerprint is registered, and relates it to a name. 
+* Creates a server where you decide if open de door or not.
+
+
+On top of the CAN interface, a Python script is implemented to:
+
+* Receive CAN messages
+* Send CAN commands
+* Expose an HTTP interface
+* Bridge HTTP requests to CAN commands
+
+This makes it possible to control the door from:
+
+* A web browser
+* Another device on the local network
+* Future cloud integrations
+
+---
+
+### Command Flow Example
+
+The complete flow of an "Open Door" request is:
+
+1. A user accesses the HTTP endpoint on the Raspberry Pi.
+2. The Python script receives the HTTP request.
+3. The script generates a CAN frame with the corresponding `OPEN_DOOR` command.
+4. The STM32 receives the CAN frame.
+5. The CAN task sends a message to the Motor task via the FreeRTOS queue.
+6. The Motor task validates the state and executes the movement.
+
+This way, we are able to ensure:
+
+* Clear separation between real-time control and networking
+* No direct exposure of the microcontroller to HTTP
+* Safe message-based communication between layers
+* Easy extensibility for future features
+
+---
+
+### Design Philosophy
+
+The Raspberry Pi software is intentionally lightweight and modular. It does not implement motor logic or state machines; it only acts as a bridge between external systems and the embedded controller.
+
+By isolating networking and HTTP handling on Linux, the embedded firmware remains deterministic and real-time safe. This division of responsibilities improves system robustness and makes debugging significantly easier.
+
+This comes again to one of the main objectives of the project, which is to ensure each task remains small and robust, in order
+to create a solid and reusable project. 
+
+---
 
 
 ## 🧱 Design Decisions
 
-Explain:
-- Why RTOS
-- Why layered architecture
-- Why message-based control
+
+### Why RTOS
+The decision to use an RTOS comes from the design philosophy of building small, robust bricks to compose the overall system. Using an RTOS simplifies development because you can focus on crafting a well-defined application for a specific responsibility within the device.
+
+Once a task is implemented, it can be debugged and tested independently. This modularity makes it significantly easier to detect, isolate, and solve errors compared to a monolithic, tightly coupled design.
+
+Another key point is the possibility of reusing tasks across different projects. Since each task is not strictly tied to DAC-IO, if I later develop a different project that requires similar functionality, I can reuse these functional bricks and integrate them with new ones. This approach reduces development time and improves maintainability in the long term. 
+---
+### Why layered architecture
+
+Again, my idea is to make the code as robust and reusable as possible. A layered architecture allows me to decouple the device drivers from the specific controller and high-level application logic.
+
+By separating:
+
+Hardware access (BSP layer)
+
+Control logic (task layer)
+
+Communication interfaces (CAN, etc.)
+
+I ensure that each layer has a single responsibility.
+
+This makes the system easier to maintain and extend. For example, if I decide to migrate to a different microcontroller in a future project, I would only need to adapt the BSP layer while keeping the higher-level logic intact. This significantly reduces the time and effort required for migration.
+
+---
+### Why message-based control
+The message-based control model is used to ensure safe and deterministic communication between tasks.
+
+Instead of allowing tasks to directly access hardware or shared resources, all interactions are performed by sending structured commands through a message queue. This guarantees that:
+
+Only the owner task controls its hardware and there are no race conditions between tasks.The system remains thread-safe.
+
+The control flow is predictable and easier to debug.
+
+Each task becomes an independent module that reacts to events rather than being tightly coupled to other components. For example, the CAN task does not open the door directly — it sends a command to the motor task. The motor task then validates the current state, processes the request, and executes the required action.
+
+This event-driven design improves scalability, as new features can be added simply by defining new commands without modifying the internal logic of other tasks.

@@ -13,9 +13,11 @@ The system integrates:
 
 ## 📸 Project Overview
 
-> Add a general photo of the setup here.
+
 
 ![System Overview](images/system_overview.png)
+
+![Esquema](esquema_hardware.png)
 
 ---
 

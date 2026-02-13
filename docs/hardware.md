@@ -16,7 +16,7 @@ This system is composed of:
 
 ---
 
-## 🔌 Pin Configuration
+## 🔌 STM32 Pin Configuration
 
 ### Fingerprint Sensor (AS608)
 
@@ -64,6 +64,22 @@ This system is composed of:
 | GND    |    GND   |      |
 
 ---
+
+## 🔌 RPI Pin Configuration
+
+###  MCP2515 Connection to RPI
+
+| Signal | STM32 Pin | Notes |
+|--------|----------|------|
+| TX     |    PA2   | UART |
+| RX     |    PA3   | UART |
+| VCC    |   3.3V   |      |
+| GND    |    GND   |      |
+
+---
+
+As the TJA1042 needs a supply voltage of 5V to operate in the CANBus with the Stm32, it was necessary to cut the connection inside the PCB and make a new one which goes to the 5V supply of the RPI3 
+
 
 ## 📐 Hardware Diagram
 
