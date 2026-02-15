@@ -42,15 +42,15 @@ This system is composed of:
 
 ### OLED Display (SSD1309)
 
-| Signal | STM32 Pin | Interface |
-|--------|----------|----------|
-| MOSI   |  PA7     | SPI      |
-| SCK    |  PA5     | SPI      |
-| CS     |  PB0     | SPI      |
-| DC     |  PC5     |          |
-| RST    |  PC4     |          |
-| VCC    |  3.3V    |          |
-| GND    |  GND     |          |
+| Signal     | STM32 Pin | Interface |
+|------------|----------|----------|
+| MOSI/DIN   |  PA7     | SPI      |
+| SCK        |  PA5     | SPI      |
+| CS         |  PB0     | SPI      |
+| DC         |  PC5     |          |
+| RST        |  PC4     |          |
+| VCC        |  3.3V    |          |
+| GND        |  GND     |          |
 
 ---
 
@@ -69,19 +69,23 @@ This system is composed of:
 
 ###  MCP2515 Connection to RPI
 
-| Signal | STM32 Pin | Notes |
+| MCP Pin| RPI Pin | Notes |
 |--------|----------|------|
-| TX     |    PA2   | UART |
-| RX     |    PA3   | UART |
-| VCC    |   3.3V   |      |
-| GND    |    GND   |      |
+| TJA+   |    5V    |      |
+| VCC    |    3V    |      |
+| CS     |  GPIO8   |      |
+| SO     |  GPIO9   |      |
+| SI     |  GPIO10  |      |
+| SCK    |  GPIO11  |      |
+| INT    |  GPIO25  |      |
 
 ---
 
 As the TJA1042 needs a supply voltage of 5V to operate in the CANBus with the Stm32, it was necessary to cut the connection inside the PCB and make a new one which goes to the 5V supply of the RPI3 
 
+![Esquema](img/rewiringmcp.jpeg)
 
 ## 📐 Hardware Diagram
 
 :
-![Esquema](esquema_hardware.png)
+![Esquema](img/esquema_hardware.png)

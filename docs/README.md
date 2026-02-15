@@ -14,7 +14,7 @@ The system integrates:
 ## 📸 Project Overview
 
 
-![System Overview](images/system_overview.png)
+![System Overview](img/overview.jpeg)
 
 ![Esquema](esquema_hardware.png)
 
