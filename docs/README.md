@@ -14,7 +14,6 @@ The system integrates:
 ## 📸 Project Overview
 
 
-
 ![System Overview](images/system_overview.png)
 
 ![Esquema](esquema_hardware.png)
@@ -38,8 +37,8 @@ The system integrates:
 See detailed documentation:
 
 - 📐 [Hardware Architecture](hardware.md)
-- 🧩 [Software Architecture](software_architecture.md)
-- 🕓 [Development Log](development_log.md)
+- 🧩 [Software Architecture](software.md)
+
 
 ---
 

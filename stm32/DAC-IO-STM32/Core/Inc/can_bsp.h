@@ -34,4 +34,3 @@ can_bsp_status_t CAN_BSP_Send(uint32_t std_id,
 void CAN_BSP_RxCallback(const can_bsp_msg_t *msg);
 
 #endif
-

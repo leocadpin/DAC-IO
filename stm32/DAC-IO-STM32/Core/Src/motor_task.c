@@ -10,7 +10,7 @@
 #include "motor_bsp.h"
 #include "cmsis_os.h"
 #include <string.h>
-
+#include "display_task.h"
 /* Private variables */
 static osThreadId_t motor_task_handle = NULL;
 static osMessageQueueId_t motor_queue_handle = NULL;
@@ -90,6 +90,7 @@ bool MotorTask_SendCommand(Motor_Command_t command, uint32_t parameter, uint32_t
  */
 bool MotorTask_OpenDoor(void)
 {
+	DisplayTask_Send(DISPLAY_EVENT_DOOR_OPEN);
     return MotorTask_SendCommand(MOTOR_CMD_OPEN_DOOR, 0, MOTOR_QUEUE_TIMEOUT_MS);
 }
 
@@ -98,6 +99,7 @@ bool MotorTask_OpenDoor(void)
  */
 bool MotorTask_CloseDoor(void)
 {
+	DisplayTask_Send(DISPLAY_EVENT_DOOR_CLOSED);
     return MotorTask_SendCommand(MOTOR_CMD_CLOSE_DOOR, 0, MOTOR_QUEUE_TIMEOUT_MS);
 }
 
@@ -269,7 +271,7 @@ static void Motor_HandleDoorClose(void)
     /* Update state to closing */
     Motor_UpdateState(DOOR_STATE_CLOSING);
     door_status.is_moving = true;
-    
+    DisplayTask_Send(DISPLAY_EVENT_DOOR_CLOSED);
     /* Execute door closing movement */
     bool success = Motor_BSP_CloseDoor();
     
@@ -278,6 +280,8 @@ static void Motor_HandleDoorClose(void)
         Motor_UpdateState(DOOR_STATE_CLOSED);
         door_status.is_moving = false;
         
+
+        DisplayTask_Send(DISPLAY_EVENT_IDLE);
         /* Release motor coils to save power */
         Motor_BSP_Release();
     } else {

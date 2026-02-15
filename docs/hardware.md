@@ -46,9 +46,9 @@ This system is composed of:
 |--------|----------|----------|
 | MOSI   |  PA7     | SPI      |
 | SCK    |  PA5     | SPI      |
-| CS     |  PA4     | SPI      |
-| DC     |          |          |
-| RST    |          |          |
+| CS     |  PB0     | SPI      |
+| DC     |  PC5     |          |
+| RST    |  PC4     |          |
 | VCC    |  3.3V    |          |
 | GND    |  GND     |          |
 

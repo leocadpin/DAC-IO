@@ -27,6 +27,7 @@
 #include "debug_task.h"
 #include "can_task.h"
 #include "motor_task.h"
+#include "display_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,7 +38,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-/* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
@@ -84,22 +84,43 @@ void StartDefaultTask(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void Motor_PowerMonitor_Check(void)
-{
-    static uint32_t reset_count = 0;
+//void Motor_PowerMonitor_Check(void)
+//{
+//    static uint32_t reset_count = 0;
+//
+//    // Detectar si hubo reset inesperado
+//    if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
+//        reset_count++;
+//
+//        __HAL_RCC_CLEAR_RESET_FLAGS();
+//    }
+//
+//    if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST)) {
+//
+//        __HAL_RCC_CLEAR_RESET_FLAGS();
+//    }
+//}
+//void TestTask(void *argument)
+//{
+//    vTaskDelay(pdMS_TO_TICKS(3000));
+//
+//    for(;;)
+//    {
+//        DisplayTask_Send(DISPLAY_EVENT_FINGER_OK);
+//        vTaskDelay(pdMS_TO_TICKS(2000));
+//
+//        DisplayTask_Send(DISPLAY_EVENT_DOOR_OPEN);
+//        vTaskDelay(pdMS_TO_TICKS(3000));
+//
+//        DisplayTask_Send(DISPLAY_EVENT_DOOR_CLOSED);
+//        vTaskDelay(pdMS_TO_TICKS(2000));
+//
+//        DisplayTask_Send(DISPLAY_EVENT_IDLE);
+//        vTaskDelay(pdMS_TO_TICKS(3000));
+//    }
+//}
 
-    // Detectar si hubo reset inesperado
-    if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST)) {
-        reset_count++;
-
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-    }
-
-    if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST)) {
-
-        __HAL_RCC_CLEAR_RESET_FLAGS();
-    }
-}
+// Después de DisplayTask_Init():
 
 /**
  * @brief Test de consumo antes de mover el motor
@@ -107,15 +128,15 @@ void Motor_PowerMonitor_Check(void)
  */
 //void Test2_Slow_Sequence(void)
 //{
-//
-//
-//
-//    // Apagar todo
-//
-//
-//    printf("TEST 4: Normal Speed Test\n");
-//    printf("Motor girando a velocidad normal (2ms entre pasos)\n\n");
-//
+////
+////
+////
+////    // Apagar todo
+////
+////
+////    printf("TEST 4: Normal Speed Test\n");
+////    printf("Motor girando a velocidad normal (2ms entre pasos)\n\n");
+////
 //    const uint8_t sequence[8][4] = {
 //        {1, 0, 0, 0},
 //        {1, 1, 0, 0},
@@ -126,9 +147,9 @@ void Motor_PowerMonitor_Check(void)
 //        {0, 0, 0, 1},
 //        {1, 0, 0, 1}
 //    };
-//
-//    // Hacer una revolución completa (2048 pasos)
-//    printf("Girando 360 grados...\n");
+////
+////    // Hacer una revolución completa (2048 pasos)
+////    printf("Girando 360 grados...\n");
 //    for (int step = 0; step < 4096; step++) {
 //        int seq_idx = step % 8;
 //
@@ -139,16 +160,16 @@ void Motor_PowerMonitor_Check(void)
 //
 //        HAL_Delay(2);  // 2ms - velocidad normal
 //    }
-//
-//    // Apagar todo
+////
+////    // Apagar todo
 //    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 //    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET);
 //    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_RESET);
 //    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_RESET);
-//
-//    printf("TEST 4 COMPLETADO\n\n");
-//
-//
+////
+////    printf("TEST 4 COMPLETADO\n\n");
+////
+////
 //}
 /* USER CODE END 0 */
 
@@ -166,8 +187,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-	HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -188,9 +208,9 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_USART2_UART_Init();
+
   /* USER CODE BEGIN 2 */
 
-//  Motor_PowerMonitor_Check();
 //  Test2_Slow_Sequence();
   /* USER CODE END 2 */
 
@@ -218,15 +238,19 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-
+// Test2_Slow_Sequence();
   MotorTask_Init();
   FingerprintTask_Init();
   CANTask_Init();
+  DisplayTask_Init();
+  CAN_BSP_Init();
+//  xTaskCreate(TestTask, "Test", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
 //  ConsumerTask_Init();
 
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
+
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
 
@@ -313,9 +337,9 @@ static void MX_CAN1_Init(void)
   hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
-  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan1) != HAL_OK)
@@ -456,7 +480,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -531,6 +555,12 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|LD5_Pin|LD6_Pin
                           |Audio_RST_Pin, GPIO_PIN_RESET);
 
@@ -543,12 +573,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : OTG_FS_PowerSwitchOn_Pin */
-  GPIO_InitStruct.Pin = OTG_FS_PowerSwitchOn_Pin;
+  /*Configure GPIO pins : OTG_FS_PowerSwitchOn_Pin PC4 PC5 */
+  GPIO_InitStruct.Pin = OTG_FS_PowerSwitchOn_Pin|GPIO_PIN_4|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(OTG_FS_PowerSwitchOn_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PDM_OUT_Pin */
   GPIO_InitStruct.Pin = PDM_OUT_Pin;
@@ -563,6 +593,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BOOT1_Pin */
   GPIO_InitStruct.Pin = BOOT1_Pin;

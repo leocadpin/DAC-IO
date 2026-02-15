@@ -7,8 +7,8 @@
 
 
 #include "fingerprint_task.h"
-
-
+#include "motor_task.h"
+#include "display_task.h"
 typedef enum {
     FP_STATE_IDLE,
     FP_STATE_WAIT_FINGER,
@@ -17,7 +17,8 @@ typedef enum {
     FP_STATE_MATCH,
     FP_STATE_NO_MATCH,
     FP_STATE_ERROR,
-	FP_STATE_ENROLL
+    FP_STATE_ENROLL,
+    FP_STATE_WAIT_CONFIRM
 } fp_state_t;
 
 typedef enum {
@@ -35,8 +36,13 @@ typedef enum {
 
 static QueueHandle_t fp_queue;
 static TaskHandle_t fp_task_handle;
+static QueueHandle_t fp_confirm_queue;
 
 
+QueueHandle_t FingerprintTask_GetConfirmQueue(void)
+{
+    return fp_confirm_queue;
+}
 
 QueueHandle_t FingerprintTask_GetQueue(void)
 {
@@ -48,14 +54,14 @@ static void FingerprintTask(void *arg)
     fp_state_t state = FP_STATE_IDLE;
     uint16_t id;
 
-
     for (;;)
     {
         switch (state)
         {
         case FP_STATE_IDLE:
+        	door_state = MotorTask_GetDoorStatus();
+            state = FP_STATE_WAIT_FINGER;
 
-			state = FP_STATE_WAIT_FINGER;
 
             break;
 
@@ -67,10 +73,11 @@ static void FingerprintTask(void *arg)
             }
             else
             {
-				if (AS608_GetImage() == AS608_OK)
-					state = FP_STATE_CONVERT;
-				else
-					vTaskDelay(pdMS_TO_TICKS(10000));
+
+                if (AS608_GetImage() == AS608_OK)
+                    state = FP_STATE_CONVERT;
+                else
+                    vTaskDelay(pdMS_TO_TICKS(5000));
             }
 
             break;
@@ -97,6 +104,37 @@ static void FingerprintTask(void *arg)
             };
             xQueueSend(fp_queue, &evt, 0);
             vTaskDelay(pdMS_TO_TICKS(500));
+            DisplayTask_Send(DISPLAY_EVENT_FINGER_OK);
+            state = FP_STATE_WAIT_CONFIRM;
+            break;
+        }
+        case FP_STATE_WAIT_CONFIRM:
+        {
+            uint8_t confirm;
+
+            if (xQueueReceive(fp_confirm_queue,
+                              &confirm,
+                              pdMS_TO_TICKS(30000)))   // 30 segundos
+            {
+                // Confirmación recibida desde la RPi vía CAN
+                MotorTask_OpenDoor();
+
+                // Debug: indicar que se recibió confirmación
+//                HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);  // LED azul
+                vTaskDelay(pdMS_TO_TICKS(200));
+//                HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+            }
+            else
+            {
+                // Timeout - no hubo confirmación de la RPi
+                // Debug: indicar timeout
+                for(int i = 0; i < 3; i++)
+                {
+//                    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);  // LED rojo
+                    vTaskDelay(pdMS_TO_TICKS(100));
+                }
+            }
+
             state = FP_STATE_IDLE;
             break;
         }
@@ -106,6 +144,7 @@ static void FingerprintTask(void *arg)
                 .status = AS608_NO_MATCH,
                 .id = 0
             };
+            DisplayTask_Send(DISPLAY_EVENT_FINGER_FAIL);
             xQueueSend(fp_queue, &evt, 0);
             vTaskDelay(pdMS_TO_TICKS(500));
             state = FP_STATE_IDLE;
@@ -212,7 +251,19 @@ static void FingerprintTask(void *arg)
 
 void FingerprintTask_Init(void)
 {
+    // Crear la cola de eventos de fingerprint
     fp_queue = xQueueCreate(4, sizeof(fingerprint_event_t));
+
+    // Crear la cola de confirmación (para recibir OK desde CAN/RPi)
+    fp_confirm_queue = xQueueCreate(1, sizeof(uint8_t));
+
+    // Verificar que las colas se crearon correctamente
+    if (fp_queue == NULL || fp_confirm_queue == NULL)
+    {
+        // Error: no se pudo crear alguna cola
+//        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);  // LED rojo de error
+        while(1);  // Quedarse aquí para debug
+    }
 
     xTaskCreate(
         FingerprintTask,
@@ -228,4 +279,3 @@ void Fingerprint_RequestEnroll(void)
 {
     enroll_requested = 1;
 }
-
