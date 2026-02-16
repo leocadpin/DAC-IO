@@ -41,7 +41,7 @@ This system is composed of:
 ---
 
 ### OLED Display (SSD1309)
-
+![Esquema](img/oled1.jpeg)
 | Signal     | STM32 Pin | Interface |
 |------------|----------|----------|
 | MOSI/DIN   |  PA7     | SPI      |

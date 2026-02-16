@@ -14,9 +14,11 @@ The system integrates:
 ## 📸 Project Overview
 
 
+![Esquema](img/esquema_hardware.png)
+
 ![System Overview](img/overview.jpeg)
 
-![Esquema](img/esquema_hardware.png)
+[Demo video](https://youtube.com/shorts/DQk252-6dWs?feature=share)
 
 ---
 
@@ -29,7 +31,7 @@ The system integrates:
 - CAN message integration
 - Real-time motor control
 - OLED event visualization
-
+![server](img/server_match.png)
 ---
 
 ## 🧠 System Architecture
@@ -42,24 +44,6 @@ See detailed documentation:
 
 ---
 
-## 🏗️ Project Structure
-
-
----
-
-## ⚙️ Build Instructions
-
-- MCU:
-- IDE version:
-- FreeRTOS version:
-- Required configuration:
-
-Steps:
-1. Open project in STM32CubeIDE
-2. Build
-3. Flash to target
-
----
 
 ## 🎯 Design Philosophy
 
