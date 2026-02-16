@@ -1,0 +1,51 @@
+        state.update({
+                "match": False,
+                "finger_id": None,
+                "name": None
+            })
+            print(" No match")
+        else:
+            fid = (msg.data[1] << 8) | msg.data[2]
+            name = FINGER_MAP.get(fid, "Desconocido")
+
+            state.update({
+                "match": True,
+                "finger_id": fid,
+                "name": name
+            })
+
+            print(f" Dedaso : {name} (ID {fid})")
+
+def send_open_door():
+    msg = can.Message(
+        arbitration_id=CAN_TX_ID,
+        data=[1],
+        is_extended_id=False
+    )
+    bus.send(msg)
+    print("Comando abrir puerta enviado")
+
+# =====================
+# WEB
+# =====================
+app = Flask(__name__)
+
+@app.route("/status")
+def status():
+    return jsonify(state)
+
+@app.route("/open", methods=["POST"])
+def open_door():
+    if not state["match"]:
+        return jsonify({"error": "No hay match"}), 403
+
+    send_open_door()
+    return jsonify({"ok": True})
+
+# =====================
+# MAIN
+# =====================
+if __name__ == "__main__":
+    t = threading.Thread(target=can_listener, daemon=True)
+    t.start()
+    app.run(host="0.0.0.0", port=5000
