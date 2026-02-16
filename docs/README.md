@@ -16,7 +16,7 @@ The system integrates:
 
 ![System Overview](img/overview.jpeg)
 
-![Esquema](esquema_hardware.png)
+![Esquema](img/esquema_hardware.png)
 
 ---
 
