@@ -6,7 +6,7 @@ The system integrates:
 - Fingerprint authentication (AS608)
 - CAN communication between STM32 and RPI
 - Stepper motor door simulation (28BYJ-48)
-- OLED display interface (SSD1309)
+- Transpartent OLED display interface (SSD1309)
 - RTOS-based software architecture
 
 ---
@@ -31,6 +31,8 @@ The system integrates:
 - CAN message integration
 - Real-time motor control
 - OLED event visualization
+
+
 ![server](img/server_match.png)
 ---
 
@@ -56,10 +58,14 @@ See detailed documentation:
 
 ## 📌 Future Improvements
 
+- Improve CAN protocol abstraction. More messages and capabilities for the system
+- Improve the mobile app on RPI with better user interface 
+- Make a specific circuit, making an easier hardware connectivity 
+- Creating an specific door opening mecanism in substitution of the motor abstraction 
 - Add persistent storage
 - Improve error handling
 - Add power management
-- Improve CAN protocol abstraction
+
 
 ---
 

@@ -8,7 +8,8 @@ The system is built using:
 - FreeRTOS
 - Modular driver design
 - Event-based task communication
-
+- Python server with Flesk
+- Raspberry Pi OS Lite
 ---
 
 ## 🧵 FreeRTOS Tasks
@@ -55,6 +56,8 @@ Used mechanisms:
 
 Example flow:
 
+User Puts Finger -> AS608 Reads -> Data sent via CAN to Raspberry -> Published in a pyhon server Server 
+-> User decides if allow the entrance -> Data sent to the STM32 via CAN -> Motor Activates "Opening" the door
 
 ---
 
@@ -97,7 +100,70 @@ This architecture guarantees thread safety, enforces a clear separation of respo
 Deterministic control flow
 ---
 ### OLED Transparent Display
+# 3D Door Animation System - Conceptual Overview
 
+## Core Concept
+This system renders a realistic 3D door opening/closing animation on a monochrome OLED display using mathematical transformations. The door rotates around a vertical hinge axis (Y-axis) and is projected onto the 2D screen using isometric projection.
+
+## Mathematical Foundation
+
+The animation relies on two key transformations:
+
+1. **3D Rotation**: The door rotates in 3D space around its hinge (Y-axis)
+   - Uses standard rotation matrices with cosine/sine functions
+   - Angle varies from 0° (closed) to 90° (fully open)
+
+2. **Isometric Projection**: Converts 3D coordinates to 2D screen coordinates
+   - Simulates depth perception on a flat display
+   - Creates the illusion of viewing the door from a 45° angle
+
+## Visual Representation
+
+The door is rendered as a 3D rectangular plane with four corner points:
+- Two points remain fixed at the hinge
+- Two points rotate outward as the door opens
+- An additional edge line provides depth cues when the door is partially open
+
+## Animation Flow
+
+**Opening Sequence**:
+- Door starts flat against the frame (angle = 0)
+- Progressively rotates outward in small increments
+- Each frame recalculates point positions and redraws
+- Animation completes at 90° rotation
+
+**Closing Sequence**:
+- Reverses the opening process
+- Same mechanics, opposite direction
+- Returns to flush position (angle = 0)
+
+## Real-Time Architecture
+
+The system uses a **state machine** approach within an RTOS environment:
+
+1. **Event-Driven**: External triggers (fingerprint verification, manual commands) send events to a queue
+2. **State Transitions**: Events change the UI state (idle → animating → idle)
+3. **Non-Blocking**: Animation frames are spread across multiple task cycles using delays
+4. **Layered Design**: Separates concerns (hardware control, graphics primitives, application logic)
+
+## Technical Elegance
+
+What makes this implementation effective:
+
+- **Efficiency**: Minimal computational overhead using trigonometric lookup
+- **Smoothness**: Small angular increments (2.86° per frame) create fluid motion
+- **Clarity**: Visual cues (door handle, depth line, text labels) enhance realism
+- **Modularity**: Direction parameter allows bidirectional animation from single function
+
+## Practical Application
+
+This code demonstrates embedded systems principles:
+- Real-time graphics rendering under resource constraints
+- 3D mathematics in microcontroller environments  
+- Task synchronization and event handling
+- Memory-efficient buffer management for bitmap displays
+
+The door
 ---
 
 ### CAN Messages Handler
